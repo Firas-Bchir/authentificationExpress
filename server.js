@@ -9,13 +9,15 @@ const flash = require('express-flash')
 const session = require('express-session')
 const methodOverride = require('method-override')
 
+const User = require('./db/users')
+
 const initializePassport = require("./passport-config");
 const users = [];
 
 initializePassport(
   passport,
-  (email) => users.find(user => user.email===email),
-  id => users.find(user => user.id === id))
+  User.getUserByEmail,
+  User.getUserById)
 app.set("view-engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
 app.use(flash())
