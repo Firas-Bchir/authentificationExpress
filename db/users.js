@@ -1,8 +1,9 @@
 mongoose = require("./index");
 const bcrypt = require("bcrypt");
 const UserSchema = new mongoose.Schema({
+  username: String,
+  email: String,
   password: String,
-  email: String
 });
 UserSchema.methods.validPassword = async function(password) {
   try {
@@ -16,16 +17,20 @@ UserSchema.methods.validPassword = async function(password) {
   }
 };
 const User = mongoose.model("User", UserSchema);
-const save = async ({ email, password }) => {
+const save = async ({ username, email, password }) => {
   try {
-    user = await User.findOne({ email: email }).exec();
-    if (!!user) {
+    existUsername = await User.findOne({ username }).exec();
+    existEmail = await User.findOne({ email }).exec();
+    if (!!existUsername) {
+      return { err: "User with this username already exist" };
+    } else if (!!existEmail) {
       return { err: "User with this email already exist" };
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = new User({ email, password: hashedPassword });
+      const user = new User({ username, email, password: hashedPassword });
       const newUser = await user.save();
-      return { _id: newUser._id, email: newUser.email };
+      delete newUser.password;
+      return newUser;
     }
   } catch (err) {
     return { errNew: err };
@@ -33,9 +38,11 @@ const save = async ({ email, password }) => {
 };
 const login = async ({ email, password }) => {
   try {
-    user = await User.findOne({ email: email }).exec();
+    user = await User.findOne({
+      $or: [{ email: email }, { username: email }],
+    }).exec();
     if (!user) {
-      return { err: "Incorrect email." };
+      return { err: "Username or Email not exist." };
     } else {
       let validPassword = await user.validPassword(password);
       if (!validPassword) {
@@ -48,7 +55,8 @@ const login = async ({ email, password }) => {
   }
 };
 const getUserById = (_id) => User.findById(_id);
-const getUserByEmail = (email) => User.findOne(email)
+const getUserByEmail = (email) =>
+  User.findOne({ $or: [{ email: email }, { username: email }] }).exec();
 module.exports = { save, login, getUserById, getUserByEmail };
 // let testSave = async (user) => {
 //   result = await save(user);
