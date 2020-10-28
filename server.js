@@ -14,10 +14,12 @@ const methodOverride = require("method-override");
 
 const User = require("./db/users");
 
-const initializePassport = require("./passport-config");
+const passportLocal = require("./passportLocal");
+const passportGoogle = require("./passportGoogle");
 const users = [];
 
-initializePassport(passport, User.getUserByEmail, User.getUserById);
+passportLocal(passport, User.getUserByEmail, User.getUserById);
+passportGoogle(passport, User.findOrCreate);
 app.set("view-engine", "ejs");
 app.use(express.urlencoded({ extended: false }));
 app.use(flash());
@@ -65,7 +67,15 @@ app.delete("/logout", (req, res) => {
   req.logOut();
   res.redirect("/login");
 });
-
+// Google
+app.get('/auth/google',
+  passport.authenticate('google', { scope: 'https://www.google.com/m8/feeds' }))
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/');
+  });
+//
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();

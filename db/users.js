@@ -57,7 +57,14 @@ const login = async ({ email, password }) => {
 const getUserById = (_id) => User.findById(_id);
 const getUserByEmail = (email) =>
   User.findOne({ $or: [{ email: email }, { username: email }] }).exec();
-module.exports = { save, login, getUserById, getUserByEmail };
+
+module.exports = {
+  save,
+  login,
+  getUserById,
+  getUserByEmail,
+  findOrCreate: User.findOrCreate,
+};
 // let testSave = async (user) => {
 //   result = await save(user);
 //   console.log({ result });
