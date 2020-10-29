@@ -4,6 +4,8 @@ const UserSchema = new mongoose.Schema({
   username: String,
   email: String,
   password: String,
+  provider: String,
+  providerId:String
 });
 UserSchema.methods.validPassword = async function(password) {
   try {
@@ -57,13 +59,24 @@ const login = async ({ email, password }) => {
 const getUserById = (_id) => User.findById(_id);
 const getUserByEmail = (email) =>
   User.findOne({ $or: [{ email: email }, { username: email }] }).exec();
-
+const findOrCreate =async ({provider,providerId,username}) => {
+  try{
+    let user =await User.findOne({provider,providerId})
+    if(!user){
+      const create = new User({provider,providerId,username});
+      user = await create.save();
+    }
+    return user
+  }catch(err){
+    return false
+  }
+}
 module.exports = {
   save,
   login,
   getUserById,
   getUserByEmail,
-  findOrCreate: User.findOrCreate,
+  findOrCreate
 };
 // let testSave = async (user) => {
 //   result = await save(user);
