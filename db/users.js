@@ -5,7 +5,7 @@ const UserSchema = new mongoose.Schema({
   email: String,
   password: String,
   provider: String,
-  providerId:String
+  providerId: String
 });
 UserSchema.methods.validPassword = async function(password) {
   try {
@@ -29,7 +29,12 @@ const save = async ({ username, email, password }) => {
       return { err: "User with this email already exist" };
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = new User({ username, email, password: hashedPassword });
+      const user = new User({
+        username,
+        email,
+        password: hashedPassword,
+        provider: "local",
+      });
       const newUser = await user.save();
       delete newUser.password;
       return newUser;
@@ -41,7 +46,10 @@ const save = async ({ username, email, password }) => {
 const login = async ({ email, password }) => {
   try {
     user = await User.findOne({
-      $or: [{ email: email }, { username: email }],
+      $or: [
+        { email: email, provider: "local" },
+        { username: email, provider: "local" },
+      ],
     }).exec();
     if (!user) {
       return { err: "Username or Email not exist." };
@@ -58,25 +66,25 @@ const login = async ({ email, password }) => {
 };
 const getUserById = (_id) => User.findById(_id);
 const getUserByEmail = (email) =>
-  User.findOne({ $or: [{ email: email }, { username: email }] }).exec();
-const findOrCreate =async ({provider,providerId,username}) => {
-  try{
-    let user =await User.findOne({provider,providerId})
-    if(!user){
-      const create = new User({provider,providerId,username});
+  User.findOne({ $or: [{ email: email,provider: "local" }, { username: email, provider: "local" }] }).exec();
+const findOrCreate = async ({ provider, providerId, username }) => {
+  try {
+    let user = await User.findOne({ provider, providerId });
+    if (!user) {
+      const create = new User({ provider, providerId, username });
       user = await create.save();
     }
-    return user
-  }catch(err){
-    return false
+    return user;
+  } catch (err) {
+    return false;
   }
-}
+};
 module.exports = {
   save,
   login,
   getUserById,
   getUserByEmail,
-  findOrCreate
+  findOrCreate,
 };
 // let testSave = async (user) => {
 //   result = await save(user);
