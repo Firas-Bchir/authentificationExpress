@@ -2,9 +2,16 @@ if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
 }
 const express = require("express");
+var bodyParser = require("body-parser");
 const app = express();
 var path = require("path");
 var clientPath = path.join(__dirname, "../reactapp/build");
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
 app.use(express.static(clientPath));
 app.use((req, res, next) => {
   next();
@@ -42,42 +49,43 @@ app.use(methodOverride("_method"));
 app.get("/login", checkNotAuthenticated, (req, res) => {
   res.render("login.ejs");
 }); */
-app.get("/user", (req, res) => {
+app.get("/api/user", (req, res) => {
+  console.log({ user: req.user });
   res.json({ user: req.user });
 });
-app.post(
-  "/login",
-  checkNotAuthenticated,
-  passport.authenticate("local", {
-    successRedirect: "/",
-    failureRedirect: "/login",
-    failureFlash: true,
-  })
-);
+app.post("/api/login", passport.authenticate("local"), function(req, res) {
+  // If this function gets called, authentication was successful.
+  // `req.user` contains the authenticated user.
+  res.json({ user: req.user });
+});
+
 /* app.get("/register", checkNotAuthenticated, (req, res) => {
   res.render("register.ejs");
 }); */
-app.post("/register", checkNotAuthenticated, async (req, res) => {
+app.post("/api/register", checkNotAuthenticated, async (req, res) => {
   let { username, email, password } = req.body;
   try {
     user = await User.save({ username, email, password });
-    res.send(user);
+    passport.authenticate("local")(req, res, function() {
+      res.json({ user: req.user });
+    });
   } catch (e) {
     console.log(e);
     res.redirect("/register");
   }
 });
-app.delete("/logout", (req, res) => {
+app.delete("/api/logout", (req, res) => {
   req.logOut();
-  res.redirect("/login");
+  res.sendStatus(204);
+  // res.redirect("/login");
 });
 // Google
 app.get(
-  "/auth/google",
+  "/api/auth/google",
   passport.authenticate("google", { scope: ["profile"] })
 );
 app.get(
-  "/auth/google/callback",
+  "/api/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   function(req, res) {
     res.redirect("/");
