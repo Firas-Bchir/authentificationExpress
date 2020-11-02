@@ -3,10 +3,12 @@ if (process.env.NODE_ENV !== "production") {
 }
 const express = require("express");
 const app = express();
-app.use((req, res,next) => {
-  next()
-})
-const bcrypt = require("bcrypt");
+var path = require("path");
+var clientPath = path.join(__dirname, "../reactapp/build");
+app.use(express.static(clientPath));
+app.use((req, res, next) => {
+  next();
+});
 const passport = require("passport");
 const flash = require("express-flash");
 const session = require("express-session");
@@ -34,11 +36,14 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(methodOverride("_method"));
 
-app.get("/", checkAuthenticated, (req, res) => {
+/* app.get("/", checkAuthenticated, (req, res) => {
   res.render("index.ejs", { name: req.user.username });
 });
 app.get("/login", checkNotAuthenticated, (req, res) => {
   res.render("login.ejs");
+}); */
+app.get("/user", (req, res) => {
+  res.json({ user: req.user });
 });
 app.post(
   "/login",
@@ -49,32 +54,38 @@ app.post(
     failureFlash: true,
   })
 );
-app.get("/register", checkNotAuthenticated, (req, res) => {
+/* app.get("/register", checkNotAuthenticated, (req, res) => {
   res.render("register.ejs");
-});
+}); */
 app.post("/register", checkNotAuthenticated, async (req, res) => {
-  let { username,email, password } = req.body;
+  let { username, email, password } = req.body;
   try {
-    user = await User.save({ username,email, password });
+    user = await User.save({ username, email, password });
     res.send(user);
   } catch (e) {
-    console.log(e)
+    console.log(e);
     res.redirect("/register");
   }
-  console.log(users);
 });
 app.delete("/logout", (req, res) => {
   req.logOut();
   res.redirect("/login");
 });
 // Google
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile'] }));
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/login' }),
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile"] })
+);
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
   function(req, res) {
-    res.redirect('/');
-  });
+    res.redirect("/");
+  }
+);
+app.get("*", function(req, res) {
+  res.sendFile(clientPath + "/index.html");
+});
 //
 function checkAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {

@@ -1,7 +1,6 @@
 var GoogleStrategy = require('passport-google-oauth20').Strategy;
 const bcrypt = require("bcrypt");
 function initialize(passport, findOrCreate) {
-  console.log(process.env.DOMAIN + "auth/google/callback")
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CONSUMER_KEY,
     clientSecret: process.env.GOOGLE_CONSUMER_SECRET,
