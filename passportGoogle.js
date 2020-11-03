@@ -4,7 +4,7 @@ function initialize(passport, findOrCreate) {
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CONSUMER_KEY,
     clientSecret: process.env.GOOGLE_CONSUMER_SECRET,
-    callbackURL: process.env.DOMAIN + "auth/google/callback"
+    callbackURL: process.env.DOMAIN + "api/auth/google/callback"
   },
   async function(token, tokenSecret, profile, done) {
       let socialUser={
